@@ -6,11 +6,12 @@ import {
   defaultDarkTheme,
 } from '@/components/ThemeRegistry/theme'
 import copyToClipboard from '@/lib/copyToClipboard'
-import { Close, Delete } from '@mui/icons-material'
+import { Close, ContentCopy, Delete } from '@mui/icons-material'
 import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
   Modal,
   Table,
   TableBody,
@@ -22,7 +23,6 @@ import {
   TableRow,
   TextField,
   ThemeProvider,
-  Tooltip,
   styled,
   tableCellClasses,
 } from '@mui/material'
@@ -55,10 +55,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(odd)': {
     backgroundColor: theme.palette.action.hover,
-  },
-  // hide last border
-  '&:last-child td, &:last-child th': {
-    border: 0,
   },
 }))
 
@@ -284,17 +280,31 @@ export default function Profile() {
                   .slice(0, Math.min(take, urlList.length))
                   .map((obj, index) => (
                     <StyledTableRow key={index}>
-                      <StyledTableCell
-                        onClick={() => onUrlClick(obj.originalUrl)}
-                      >
-                        <Tooltip title={obj.originalUrl}>
+                      <StyledTableCell>
+                        <div className="flex w-full items-center gap-2">
+                          <IconButton
+                            size="small"
+                            color="secondary"
+                            title="Copy to Clipboard"
+                            onClick={() => onUrlClick(obj.originalUrl)}
+                          >
+                            <ContentCopy fontSize="inherit"></ContentCopy>
+                          </IconButton>
                           <p>{obj.originalUrl}</p>
-                        </Tooltip>
+                        </div>
                       </StyledTableCell>
-                      <StyledTableCell onClick={() => onUrlClick(obj.shortUrl)}>
-                        <Tooltip title={obj.shortUrl}>
+                      <StyledTableCell>
+                        <div className="flex w-full items-center gap-2">
+                          <IconButton
+                            size="small"
+                            color="secondary"
+                            title="Copy to Clipboard"
+                            onClick={() => onUrlClick(obj.shortUrl)}
+                          >
+                            <ContentCopy fontSize="inherit"></ContentCopy>
+                          </IconButton>
                           <p>{obj.shortUrl}</p>
-                        </Tooltip>
+                        </div>
                       </StyledTableCell>
                       <StyledTableCell>
                         <p>
@@ -306,15 +316,17 @@ export default function Profile() {
                           variant="contained"
                           size="small"
                           title="Delete URL"
+                          color="error"
                           onClick={() => deleteUrl(obj.id, index)}
                         >
                           {deletingUrl === index ? (
                             <CircularProgress
-                              size={30}
-                              color="secondary"
+                              size={28}
+                              thickness={6}
+                              sx={{ color: 'white' }}
                             ></CircularProgress>
                           ) : (
-                            <Delete />
+                            <Delete sx={{ fontSize: 28 }} />
                           )}
                         </Button>
                       </StyledTableCell>
@@ -344,14 +356,15 @@ export default function Profile() {
         >
           <Box sx={modalContentStyle}>
             <div className="flex flex-row items-center justify-end border-b-2 border-b-gray-300">
-              <Button onClick={handleClose} variant="text">
-                <Close className="!font-bold !text-black" />
-              </Button>
+              <IconButton onClick={handleClose} color="default">
+                <Close sx={{ color: 'black' }} />
+              </IconButton>
             </div>
             <form className="flex flex-col gap-4" onSubmit={addUrl}>
               <div className="w-100 mt-4 flex items-center justify-center">
                 <TextField
                   required
+                  autoFocus
                   label="Url"
                   name="url"
                   type="url"
@@ -362,8 +375,8 @@ export default function Profile() {
                   InputLabelProps={{ style: { color: 'black' } }}
                 />
               </div>
-              <div className="flex w-full items-center justify-center">
-                <Button variant="contained" type="submit">
+              <div className="mx-auto flex w-4/12 items-center justify-center">
+                <Button variant="contained" type="submit" fullWidth>
                   {addingUrl ? (
                     <CircularProgress size={30}></CircularProgress>
                   ) : (

@@ -89,3 +89,14 @@ export const deleteUrl = async (
   })
   return true
 }
+
+export const getOriginalUrlFromShortUrl = async (
+  shortUrl: string
+): Promise<string> => {
+  const url = await prisma.url.findFirstOrThrow({
+    where: {
+      shortUrl: shortUrl,
+    },
+  })
+  return url.originalUrl
+}

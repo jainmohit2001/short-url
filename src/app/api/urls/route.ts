@@ -2,13 +2,14 @@ import { authOptions } from '@/lib/authOptions'
 import { createUrl, deleteUrl, getUrlsForUser } from '@/lib/url'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   // Get Session data
   const session = await getServerSession(authOptions)
   if (!session || !session?.user) {
-    return NextResponse.redirect('/dashboard')
+    redirect('/dashboard')
   }
 
   // Get skip and take params from the URL
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   // Get Session data
   const session = await getServerSession(authOptions)
   if (!session || !session?.user) {
-    return NextResponse.redirect('/dashboard')
+    redirect('/dashboard')
   }
 
   try {
@@ -61,7 +62,7 @@ export async function DELETE(req: NextRequest) {
   // Get Session data
   const session = await getServerSession(authOptions)
   if (!session || !session?.user) {
-    return NextResponse.redirect('/dashboard')
+    redirect('/dashboard')
   }
 
   try {
