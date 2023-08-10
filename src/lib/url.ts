@@ -59,6 +59,9 @@ export const getUrlsForUser = async (
       include: {
         user: true,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     }),
     prisma.url.count({
       where: {

@@ -1,25 +1,35 @@
 'use client'
 
 import { Loader } from '@/components/Loader'
-import theme from '@/components/ThemeRegistry/theme'
+import {
+  defaultLightTheme,
+  defaultDarkTheme,
+} from '@/components/ThemeRegistry/theme'
+import copyToClipboard from '@/lib/copyToClipboard'
 import { Close, Delete } from '@mui/icons-material'
 import {
   Box,
   Button,
+  CircularProgress,
   Modal,
   Table,
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
+  ThemeProvider,
+  Tooltip,
   styled,
   tableCellClasses,
 } from '@mui/material'
 import { Url } from '@prisma/client'
 import { signIn, useSession } from 'next-auth/react'
 import Image from 'next/image'
+import { useSnackbar } from 'notistack'
 import { useEffect, useState } from 'react'
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -29,6 +39,16 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
+    overflowWrap: 'break-word',
+  },
+  ':first-of-type': {
+    maxWidth: '360px',
+  },
+  ':first-of-type p': {
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 2,
   },
 }))
 
@@ -47,7 +67,7 @@ const modalContentStyle = {
     sm: 500,
   },
   margin: '1.75rem auto',
-  background: theme.palette.grey[200],
+  background: defaultDarkTheme.palette.grey[200],
   position: 'relative',
   display: 'flex',
   WebkitBoxOrient: 'vertical',
@@ -63,6 +83,8 @@ const modalContentStyle = {
   padding: '8px',
 }
 
+const take = 10
+
 export default function Profile() {
   const { status, data: session } = useSession()
   const [urlData, setUrlData] = useState([] as Url[])
@@ -71,12 +93,21 @@ export default function Profile() {
   const [skip, setSkip] = useState(0)
   const [open, setOpen] = useState(false)
   const [addUrlError, setAddUrlError] = useState('')
-  const take = 10
+  const [currentPage, setCurrentPage] = useState(0)
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
 
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
 
-  async function addUrl(e: any) {
+  const onPageChange = (event: React.MouseEvent | null, page: number): void => {
+    if (isLoading) {
+      return
+    }
+    setSkip(page * take)
+    setCurrentPage(page)
+  }
+
+  function addUrl(e: any) {
     e.preventDefault()
     const formData = {
       url: e.target.url.value,
@@ -88,22 +119,27 @@ export default function Profile() {
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then(async (res) => {
+    }).then((res) => {
       const error = res.status !== 200
-      const data = await res.json()
-      if (error && data.details) {
-        setAddUrlError(data.details.toString())
-      } else if (!error && addUrlError !== '') {
-        setAddUrlError('')
-        const url = data as Url
-        urlData.splice(1, 0, url)
-        setUrlData(urlData)
-        handleClose()
-        if (skip !== 0) {
+      res.json().then((data) => {
+        if (error && data.details) {
+          setAddUrlError(data.details.toString())
+        } else if (!error && addUrlError !== '') {
+          setAddUrlError('')
+          const url = data as Url
+          urlData.splice(1, 0, url)
+          setUrlData(urlData)
+          setOpen(false)
+          enqueueSnackbar('Successfully added!')
           setSkip(0)
         }
-      }
+      })
     })
+  }
+
+  const onUrlClick = (text: string) => {
+    copyToClipboard(text)
+    enqueueSnackbar('Copied to clipboard!', { variant: 'info' })
   }
 
   useEffect(() => {
@@ -115,7 +151,7 @@ export default function Profile() {
       .then((res) => res.json())
       .then((data: IPaginatedUrls) => {
         setUrlData(data.results)
-        setTotalUrlCount(data.totalCount ?? 0)
+        setTotalUrlCount(data.totalCount)
         setLoading(false)
       })
   }, [status, skip])
@@ -151,17 +187,6 @@ export default function Profile() {
     return <div>Invalid User</div>
   }
 
-  const style = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-  }
-
   return (
     <>
       <div className="flex w-full flex-col gap-4">
@@ -171,7 +196,12 @@ export default function Profile() {
             Add Url
           </Button>
         </div>
-        <TableContainer className="rounded-md">
+        <TableContainer className="relative rounded-md">
+          {isLoading && (
+            <div className="l-0 t-0 absolute z-10 m-auto flex h-full w-full items-center justify-center ">
+              <CircularProgress size={80}></CircularProgress>
+            </div>
+          )}
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -181,68 +211,83 @@ export default function Profile() {
                 <StyledTableCell></StyledTableCell>
               </TableRow>
             </TableHead>
-            <TableBody className={isLoading ? 'opacity-50' : ''}>
-              {isLoading && <Loader />}
+            <TableBody className={isLoading ? 'opacity-30' : ''}>
               {urlData &&
                 urlData.length > 0 &&
                 urlData.map((obj, index) => (
                   <StyledTableRow key={index}>
                     <StyledTableCell>
-                      <p className="text-sm">{obj.originalUrl}</p>
+                      <Tooltip
+                        title={obj.originalUrl}
+                        onClick={() => onUrlClick(obj.originalUrl)}
+                      >
+                        <p>{obj.originalUrl}</p>
+                      </Tooltip>
+                    </StyledTableCell>
+                    <StyledTableCell onClick={() => onUrlClick(obj.shortUrl)}>
+                      <p>{obj.shortUrl}</p>
                     </StyledTableCell>
                     <StyledTableCell>
-                      <p className="text-sm">{obj.shortUrl}</p>
+                      <p>{new Date(obj.createdAt.toString()).toDateString()}</p>
                     </StyledTableCell>
                     <StyledTableCell>
-                      <p className="text-sm">
-                        {new Date(obj.createdAt.toString()).toDateString()}
-                      </p>
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <Button variant="contained">
+                      <Button variant="contained" size="small">
                         <Delete />
                       </Button>
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
             </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  count={totalUrlCount}
+                  onPageChange={onPageChange}
+                  page={currentPage}
+                  rowsPerPage={take}
+                  rowsPerPageOptions={[take]}
+                ></TablePagination>
+              </TableRow>
+            </TableFooter>
           </Table>
         </TableContainer>
       </div>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={modalContentStyle}>
-          <div className="flex flex-row items-center justify-end border-b-2 border-b-gray-300">
-            <Button onClick={handleClose} variant="text">
-              <Close className="!font-bold !text-black" />
-            </Button>
-          </div>
-          <form className="flex flex-col gap-4" onSubmit={addUrl}>
-            <div className="w-100 mt-4 flex items-center justify-center">
-              <TextField
-                label="Url"
-                name="url"
-                type="url"
-                placeholder="Url"
-                required
-                style={{ color: 'black' }}
-                error={addUrlError !== ''}
-                helperText={addUrlError !== '' ? addUrlError : null}
-                InputLabelProps={{ style: { color: 'black' } }}
-              />
-            </div>
-            <div className="flex w-full items-center justify-center">
-              <Button variant="contained" type="submit">
-                Add
+      <ThemeProvider theme={defaultLightTheme}>
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={modalContentStyle}>
+            <div className="flex flex-row items-center justify-end border-b-2 border-b-gray-300">
+              <Button onClick={handleClose} variant="text">
+                <Close className="!font-bold !text-black" />
               </Button>
             </div>
-          </form>
-        </Box>
-      </Modal>
+            <form className="flex flex-col gap-4" onSubmit={addUrl}>
+              <div className="w-100 mt-4 flex items-center justify-center">
+                <TextField
+                  required
+                  label="Url"
+                  name="url"
+                  type="url"
+                  placeholder="Url"
+                  inputProps={{ style: { color: 'black' } }}
+                  error={addUrlError !== ''}
+                  helperText={addUrlError !== '' ? addUrlError : null}
+                  InputLabelProps={{ style: { color: 'black' } }}
+                />
+              </div>
+              <div className="flex w-full items-center justify-center">
+                <Button variant="contained" type="submit">
+                  Add
+                </Button>
+              </div>
+            </form>
+          </Box>
+        </Modal>
+      </ThemeProvider>
     </>
   )
 }
