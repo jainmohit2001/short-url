@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/authOptions'
 import { createUrl, getUrlsForUser } from '@/lib/url'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   // Get URLs for the user
   const data = await getUrlsForUser(session.user.id, skip, take)
 
-  return NextResponse.json({ data })
+  return NextResponse.json(data)
 }
 
 export async function POST(req: NextRequest) {
@@ -34,8 +35,7 @@ export async function POST(req: NextRequest) {
   try {
     // Get originalUrl from the body of request
     const body = await req.json()
-    console.log(body)
-    const originalUrl = body.get('url')
+    const originalUrl = body.url
 
     // Try to parse the URL
     // This will throw an exception if the URL is incorrect
@@ -46,6 +46,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(url)
   } catch (e) {
+    // Check if the URL exists for the user
+    if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+      return NextResponse.json(
+        { details: 'URL Already exists' },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ details: 'Invalid URL' }, { status: 400 })
   }
 }
