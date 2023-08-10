@@ -1,13 +1,15 @@
 import { authOptions } from '@/lib/authOptions'
-import { createUrl, getUrlsForUser } from '@/lib/url'
+import { createUrl, deleteUrl, getUrlsForUser } from '@/lib/url'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   // Get Session data
   const session = await getServerSession(authOptions)
   if (!session || !session?.user) {
-    return NextResponse.redirect('/dashboard')
+    redirect('/dashboard')
   }
 
   // Get skip and take params from the URL
@@ -21,21 +23,20 @@ export async function GET(req: NextRequest) {
   // Get URLs for the user
   const data = await getUrlsForUser(session.user.id, skip, take)
 
-  return NextResponse.json({ data })
+  return NextResponse.json(data)
 }
 
 export async function POST(req: NextRequest) {
   // Get Session data
   const session = await getServerSession(authOptions)
   if (!session || !session?.user) {
-    return NextResponse.redirect('/dashboard')
+    redirect('/dashboard')
   }
 
   try {
     // Get originalUrl from the body of request
     const body = await req.json()
-    console.log(body)
-    const originalUrl = body.get('url')
+    const originalUrl = body.url
 
     // Try to parse the URL
     // This will throw an exception if the URL is incorrect
@@ -46,6 +47,34 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(url)
   } catch (e) {
+    // Check if the URL exists for the user
+    if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+      return NextResponse.json(
+        { details: 'URL Already exists' },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ details: 'Invalid URL' }, { status: 400 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  // Get Session data
+  const session = await getServerSession(authOptions)
+  if (!session || !session?.user) {
+    redirect('/dashboard')
+  }
+
+  try {
+    const body = await req.json()
+
+    await deleteUrl(body.id, session.user.id)
+    return NextResponse.json({ details: 'Successfully deleted' })
+  } catch (e) {
+    console.log(e)
+    return NextResponse.json(
+      { details: 'Some error occurred' },
+      { status: 400 }
+    )
   }
 }

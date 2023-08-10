@@ -1,7 +1,6 @@
 import { Session } from 'next-auth'
 import crypto from 'crypto'
 import { prisma } from './prisma'
-import { Url } from '@prisma/client'
 
 export const getUrlById = async (id: string) => {
   const url = await prisma.url.findUnique({
@@ -59,6 +58,9 @@ export const getUrlsForUser = async (
       include: {
         user: true,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     }),
     prisma.url.count({
       where: {
@@ -73,4 +75,28 @@ export const getUrlsForUser = async (
     skip: skip,
     take: take,
   }
+}
+
+export const deleteUrl = async (
+  id: string,
+  userId: string
+): Promise<boolean> => {
+  await prisma.url.delete({
+    where: {
+      id: id,
+      userId: userId,
+    },
+  })
+  return true
+}
+
+export const getOriginalUrlFromShortUrl = async (
+  shortUrl: string
+): Promise<string> => {
+  const url = await prisma.url.findFirstOrThrow({
+    where: {
+      shortUrl: shortUrl,
+    },
+  })
+  return url.originalUrl
 }

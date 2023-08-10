@@ -1,26 +1,23 @@
 import { Inter } from 'next/font/google'
 import { createTheme } from '@mui/material/styles'
-import { gray, purple, white } from 'tailwindcss/colors'
+import { gray, purple } from 'tailwindcss/colors'
 
 const inter = Inter({ subsets: ['latin'] })
 
-const muiTheme = createTheme({
-  typography: {
-    fontFamily: inter.style.fontFamily,
-    allVariants: {
-      color: white,
-    },
-    button: {
-      textTransform: 'none',
-    },
-  },
+const defaultDarkTheme = createTheme({
   palette: {
-    primary: purple,
-    secondary: {
-      main: white,
+    mode: 'dark',
+    primary: {
+      main: purple[500],
     },
     background: {
       default: gray[950],
+    },
+  },
+  typography: {
+    fontFamily: inter.style.fontFamily,
+    button: {
+      textTransform: 'none',
     },
   },
   components: {
@@ -29,14 +26,13 @@ const muiTheme = createTheme({
         disableRipple: true,
       },
     },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          color: white,
-        },
-      },
-    },
   },
 })
 
-export default muiTheme
+const defaultLightTheme = createTheme(defaultDarkTheme, {
+  palette: {
+    mode: 'light',
+  },
+})
+
+export { defaultDarkTheme, defaultLightTheme }
