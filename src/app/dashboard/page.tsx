@@ -87,17 +87,19 @@ const take = 10
 
 export default function Profile() {
   const { status, data: session } = useSession()
-  const [urlData, setUrlData] = useState([] as Url[])
+  const [urlList, setUrlList] = useState([] as Url[])
   const [isLoading, setLoading] = useState(false)
   const [totalUrlCount, setTotalUrlCount] = useState(0)
   const [skip, setSkip] = useState(0)
-  const [open, setOpen] = useState(false)
-  const [addUrlError, setAddUrlError] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [addUrlInputError, setAddUrlInputError] = useState('')
   const [currentPage, setCurrentPage] = useState(0)
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const { enqueueSnackbar } = useSnackbar()
+  const [deletingUrl, setDeletingUrl] = useState(-1)
+  const [addingUrl, setAddingUrl] = useState(false)
 
-  const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
+  const handleOpen = () => setIsModalOpen(true)
+  const handleClose = () => setIsModalOpen(false)
 
   const onPageChange = (event: React.MouseEvent | null, page: number): void => {
     if (isLoading) {
@@ -108,6 +110,7 @@ export default function Profile() {
   }
 
   function addUrl(e: any) {
+    setAddingUrl(true)
     e.preventDefault()
     const formData = {
       url: e.target.url.value,
@@ -119,22 +122,85 @@ export default function Profile() {
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then((res) => {
-      const error = res.status !== 200
-      res.json().then((data) => {
-        if (error && data.details) {
-          setAddUrlError(data.details.toString())
-        } else if (!error && addUrlError !== '') {
-          setAddUrlError('')
-          const url = data as Url
-          urlData.splice(1, 0, url)
-          setUrlData(urlData)
-          setOpen(false)
-          enqueueSnackbar('Successfully added!')
-          setSkip(0)
-        }
-      })
     })
+      .then((res) => {
+        const error = res.status !== 200
+        setAddingUrl(false)
+        res
+          .json()
+          .then((data) => {
+            if (error && data.details) {
+              setAddUrlInputError(data.details.toString())
+              return
+            }
+            if (error) {
+              setAddUrlInputError('Some error occurred')
+              return
+            }
+            setAddUrlInputError('')
+            const url = data as Url
+            if (skip !== 0) {
+              setSkip(0)
+            } else {
+              urlList.splice(1, 0, url)
+              setUrlList(urlList)
+            }
+            setIsModalOpen(false)
+            enqueueSnackbar('Successfully added!', { variant: 'success' })
+            setTotalUrlCount(totalUrlCount + 1)
+          })
+          .catch((e) => {
+            enqueueSnackbar('Some error occurred while adding URL', {
+              variant: 'error',
+            })
+          })
+      })
+      .catch((e) => {
+        setAddingUrl(false)
+        setAddUrlInputError('Some error occurred')
+      })
+  }
+
+  function deleteUrl(id: string, index: number) {
+    setDeletingUrl(index)
+    fetch('/api/urls', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: id }),
+      headers: {
+        'Content-Type': 'applications/json',
+      },
+    })
+      .then((res) => {
+        setDeletingUrl(-1)
+        if (res.status === 200) {
+          urlList.splice(index, 1)
+          setUrlList(urlList)
+          if (urlList.length === 0) {
+            const newPage = Math.max(0, currentPage - 1)
+            setCurrentPage(newPage)
+            setSkip(newPage * take)
+          }
+          setTotalUrlCount(totalUrlCount - 1)
+          enqueueSnackbar('Successfully deleted', { variant: 'success' })
+          return
+        }
+        res
+          .json()
+          .then((data) => {
+            if (data && data.details) {
+              enqueueSnackbar(data.details.toString(), { variant: 'error' })
+            }
+          })
+          .catch((e) => {
+            enqueueSnackbar('Some error occurred while deleting URL', {
+              variant: 'error',
+            })
+          })
+      })
+      .catch((e) => {
+        setDeletingUrl(-1)
+        enqueueSnackbar('Some error occurred', { variant: 'error' })
+      })
   }
 
   const onUrlClick = (text: string) => {
@@ -150,7 +216,7 @@ export default function Profile() {
     fetch(`/api/urls?skip=${skip}&take=${take}`)
       .then((res) => res.json())
       .then((data: IPaginatedUrls) => {
-        setUrlData(data.results)
+        setUrlList(data.results)
         setTotalUrlCount(data.totalCount)
         setLoading(false)
       })
@@ -212,31 +278,48 @@ export default function Profile() {
               </TableRow>
             </TableHead>
             <TableBody className={isLoading ? 'opacity-30' : ''}>
-              {urlData &&
-                urlData.length > 0 &&
-                urlData.map((obj, index) => (
-                  <StyledTableRow key={index}>
-                    <StyledTableCell>
-                      <Tooltip
-                        title={obj.originalUrl}
+              {urlList &&
+                urlList.length > 0 &&
+                urlList
+                  .slice(0, Math.min(take, urlList.length))
+                  .map((obj, index) => (
+                    <StyledTableRow key={index}>
+                      <StyledTableCell
                         onClick={() => onUrlClick(obj.originalUrl)}
                       >
-                        <p>{obj.originalUrl}</p>
-                      </Tooltip>
-                    </StyledTableCell>
-                    <StyledTableCell onClick={() => onUrlClick(obj.shortUrl)}>
-                      <p>{obj.shortUrl}</p>
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <p>{new Date(obj.createdAt.toString()).toDateString()}</p>
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <Button variant="contained" size="small">
-                        <Delete />
-                      </Button>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                ))}
+                        <Tooltip title={obj.originalUrl}>
+                          <p>{obj.originalUrl}</p>
+                        </Tooltip>
+                      </StyledTableCell>
+                      <StyledTableCell onClick={() => onUrlClick(obj.shortUrl)}>
+                        <Tooltip title={obj.shortUrl}>
+                          <p>{obj.shortUrl}</p>
+                        </Tooltip>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <p>
+                          {new Date(obj.createdAt.toString()).toDateString()}
+                        </p>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          title="Delete URL"
+                          onClick={() => deleteUrl(obj.id, index)}
+                        >
+                          {deletingUrl === index ? (
+                            <CircularProgress
+                              size={30}
+                              color="secondary"
+                            ></CircularProgress>
+                          ) : (
+                            <Delete />
+                          )}
+                        </Button>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  ))}
             </TableBody>
             <TableFooter>
               <TableRow>
@@ -254,7 +337,7 @@ export default function Profile() {
       </div>
       <ThemeProvider theme={defaultLightTheme}>
         <Modal
-          open={open}
+          open={isModalOpen}
           onClose={handleClose}
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
@@ -274,14 +357,18 @@ export default function Profile() {
                   type="url"
                   placeholder="Url"
                   inputProps={{ style: { color: 'black' } }}
-                  error={addUrlError !== ''}
-                  helperText={addUrlError !== '' ? addUrlError : null}
+                  error={addUrlInputError !== ''}
+                  helperText={addUrlInputError !== '' ? addUrlInputError : null}
                   InputLabelProps={{ style: { color: 'black' } }}
                 />
               </div>
               <div className="flex w-full items-center justify-center">
                 <Button variant="contained" type="submit">
-                  Add
+                  {addingUrl ? (
+                    <CircularProgress size={30}></CircularProgress>
+                  ) : (
+                    'Add'
+                  )}
                 </Button>
               </div>
             </form>

@@ -12,7 +12,7 @@ export function Header() {
   const isAuthenticated = status === 'authenticated' && session && session.user
 
   return (
-    <header className="sticky top-0 z-10 flex w-full flex-row items-center gap-4 bg-slate-900 py-2">
+    <header className="sticky top-0 z-50 flex w-full flex-row items-center gap-4 bg-slate-900 py-2">
       <Link href="/" className="ml-4 flex items-center justify-center gap-3">
         <Image
           className="fill-primary-500"
