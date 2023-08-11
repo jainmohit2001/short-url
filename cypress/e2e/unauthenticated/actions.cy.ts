@@ -1,4 +1,4 @@
-describe('Running unauthenticated actions', () => {
+describe('Unauthenticated actions', () => {
   it('Should show Sign in with Google option when clicked on Dive in', () => {
     cy.visit('/')
 
