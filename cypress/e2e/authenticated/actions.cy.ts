@@ -19,7 +19,7 @@ describe('Authenticated actions', () => {
     cy.get('main').contains('Add Url').click()
 
     // Add input to the URL textField and submit the form
-    cy.get('.MuiModal-root form').get('input[name="url"]').type(url)
+    cy.get('.MuiModal-root form').find('input[name="url"]').type(url)
     cy.get('.MuiModal-root form').submit()
 
     // Wait for the POST call to complete
@@ -58,6 +58,29 @@ describe('Authenticated actions', () => {
 
         // Element should not be in table now
         cy.get('table').should('not.contain', text)
+      })
+  })
+
+  it('Check redirect functionality', () => {
+    cy.visit('/dashboard')
+
+    // Make sure a URL entry exists
+    cy.get('table tbody tr').first()
+
+    // Get the first short url
+    cy.get('table tbody tr')
+      .first()
+      .children()
+      .then(($tds) => {
+        // Get the data from the row
+        const expectedUrl = $tds.eq(0).find('p').text()
+        const url = $tds.eq(1).find('p').text()
+
+        // Cross check for thr redirect
+        cy.request({ url: url, followRedirect: false }).then((resp) => {
+          expect(resp.status).to.eq(307)
+          expect(resp.redirectedToUrl).to.eq(expectedUrl)
+        })
       })
   })
 })
