@@ -32,3 +32,6 @@ jobs:
       - name: Build
         run: |
           npm run build
+      - name: Cypress Test
+        run: |
+          npm run test:headless
