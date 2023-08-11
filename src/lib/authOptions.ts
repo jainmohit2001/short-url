@@ -16,13 +16,16 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.uid = user.id
+        token.id = user.id
       }
       return token
     },
-    async session({ session, token }) {
-      if (token && token.sub) {
-        session.user.id = token.sub
+    async session({ session, token, user }) {
+      if (token) {
+        session.user.id = token.id as string
+      }
+      if (user) {
+        session.user.id = user.id
       }
       return session
     },
