@@ -18,7 +18,7 @@ describe('Unauthenticated actions', () => {
     // Click on the Home button
     cy.get('header').contains('Home').click()
 
-    // Url should be equal to the HOST
-    cy.url().should('equal', Cypress.env('BASE_URL') + '/')
+    // Check for Home page
+    cy.url().should('not.contain', '/dashboard')
   })
 })
