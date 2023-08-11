@@ -16,7 +16,7 @@ export default function Home() {
           size="medium"
           className="!mt-3"
           endIcon={<ArrowForward />}
-          href="/dashboard/"
+          href="/dashboard"
         >
           Dive In
         </Button>

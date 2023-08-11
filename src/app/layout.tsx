@@ -22,7 +22,7 @@ export default function RootLayout({
           <NextAuthSessionProvider>
             <Header />
             <NotificationProvider>
-              <main className="flex flex-col p-5">{children}</main>
+              <main className="flex flex-1 flex-col p-5">{children}</main>
             </NotificationProvider>
           </NextAuthSessionProvider>
         </ThemeRegistry>

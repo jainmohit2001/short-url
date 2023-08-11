@@ -1,6 +1,7 @@
 name: Next.js CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
@@ -21,14 +22,48 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - name: Install dependencies
-        run: |
-          npm ci
+        run: npm ci
       - name: Run Prettier
-        run: |
-          npm run check-format
+        run: npm run check-format
       - name: Run Eslint
+        run: npm run lint
+      - name: Add .env.local
         run: |
-          npm run lint
+          touch .env.local
+          echo GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} >> .env.local
+          echo GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} >> .env.local
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env.local
+          echo NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }} >> .env.local
+          echo NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} >> .env.local
       - name: Build
+        run: npm run build
+
+  cypress-run:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Add .env.local
         run: |
-          npm run build
+          touch .env.local
+          echo GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} >> .env.local
+          echo GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} >> .env.local
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env.local
+          echo NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }} >> .env.local
+          echo NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} >> .env.local
+      - name: Cypress run
+        uses: cypress-io/github-action@v5
+        with:
+          build: npm run build
+          start: npm run start
+        env:
+          CYPRESS_NEXT_AUTH_SESSION_TOKEN: ${{ secrets.CYPRESS_NEXT_AUTH_SESSION_TOKEN }}
+          CYPRESS_BASE_URL: ${{ secrets.NEXTAUTH_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
