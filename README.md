@@ -13,7 +13,7 @@ This is a simple URL shortener project built as a part of the John Crickett's Co
 
 ## Tech Stack
 
-[Next.js](https://nextjs.org/), [TypeScript](https://www.typescriptlang.org/), [React MUI](https://mui.com/), [Tailwind CSS](https://tailwindcss.com/), [Cypress](https://www.cypress.io/) and [MongoDB](https://www.mongodb.com/)
+[Next.js](https://nextjs.org/), [NextAuth.js](https://next-auth.js.org/), [TypeScript](https://www.typescriptlang.org/), [React MUI](https://mui.com/), [Tailwind CSS](https://tailwindcss.com/), [Cypress](https://www.cypress.io/) and [MongoDB](https://www.mongodb.com/)
 
 ## Installation
 
