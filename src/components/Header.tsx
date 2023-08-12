@@ -23,6 +23,8 @@ export function Header() {
         ></Image>
         <span>Home</span>
       </Link>
+      {/* Show content is user is authenticated or not authenticated.
+      Show nothing when the status is loading */}
       <div className="ml-auto mr-5">
         {status === 'loading' ? (
           <></>

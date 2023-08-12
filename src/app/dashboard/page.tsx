@@ -105,6 +105,12 @@ export default function Profile() {
     setCurrentPage(page)
   }
 
+  /**
+   * Function used to add a URL.
+   * The form contains an input with name='url' containing the original URL.
+   *
+   * @param {*} e - The Form DOM element
+   */
   function addUrl(e: any) {
     setAddingUrl(true)
     e.preventDefault()
@@ -171,6 +177,8 @@ export default function Profile() {
         if (res.status === 200) {
           urlList.splice(index, 1)
           setUrlList(urlList)
+
+          // If the urlList is empty, then we need to go back one page if possible
           if (urlList.length === 0) {
             const newPage = Math.max(0, currentPage - 1)
             setCurrentPage(newPage)
@@ -243,10 +251,6 @@ export default function Profile() {
         </div>
       </div>
     )
-  }
-
-  if (!session?.user) {
-    return <div>Invalid User</div>
   }
 
   return (
