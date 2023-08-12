@@ -2,6 +2,12 @@ import { Session } from 'next-auth'
 import crypto from 'crypto'
 import { prisma } from './prisma'
 
+/**
+ * Get URL by its ID otherwise
+ *
+ * @async
+ * @param {string} id
+ */
 export const getUrlById = async (id: string) => {
   const url = await prisma.url.findUnique({
     where: {
@@ -14,6 +20,15 @@ export const getUrlById = async (id: string) => {
   return url
 }
 
+/**
+ * Creates a new URL corresponding to the User ID present in the Session object.
+ * The short URL is created by making sure that it is unique in the database.
+ * Returns the URL object along with the attached User.
+ *
+ * @async
+ * @param {string} originalUrl
+ * @param {Session} session
+ */
 export const createUrl = async (originalUrl: string, session: Session) => {
   if (!session?.user?.email) {
     throw new Error('No email present in Session object')
@@ -45,6 +60,15 @@ export const createUrl = async (originalUrl: string, session: Session) => {
   return url
 }
 
+/**
+ * Function to get paginated URLs from the DB.
+ *
+ * @async
+ * @param {string} id - ID of the User
+ * @param {number} [skip=0] - Records to skip
+ * @param {number} [take=10] - Records to take after skipping
+ * @returns {Promise<IPaginatedUrls>}
+ */
 export const getUrlsForUser = async (
   id: string,
   skip: number = 0,
@@ -77,6 +101,14 @@ export const getUrlsForUser = async (
   }
 }
 
+/**
+ * Deletes a URL given its ID and the User ID
+ *
+ * @async
+ * @param {string} id - ID of the URL object
+ * @param {string} userId - User ID
+ * @returns {Promise<boolean>} - true if record was found and deleted successfully, otherwise false
+ */
 export const deleteUrl = async (
   id: string,
   userId: string
@@ -90,7 +122,14 @@ export const deleteUrl = async (
   return true
 }
 
-export const getOriginalUrlFromShortUrl = async (
+export /**
+ * Given a short URL, find if a URL object exists otherwise throw an error.
+ *
+ * @async
+ * @param {string} shortUrl
+ * @returns {Promise<string>} - the original URL corresponding to the short URL
+ */
+const getOriginalUrlFromShortUrl = async (
   shortUrl: string
 ): Promise<string> => {
   const url = await prisma.url.findFirstOrThrow({
