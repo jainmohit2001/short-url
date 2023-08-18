@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import './globals.css'
 import type { Metadata } from 'next'
@@ -26,6 +27,7 @@ export default function RootLayout({
             </NotificationProvider>
           </NextAuthSessionProvider>
         </ThemeRegistry>
+        <Analytics />
       </body>
     </html>
   )
