@@ -13,7 +13,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test": "npm run cypress:open",
-    "test:headless": "npm run cypress:run"
+    "test:headless": "npm run cypress:run",
+    "postinstall": "npm run prisma-dev-push"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
