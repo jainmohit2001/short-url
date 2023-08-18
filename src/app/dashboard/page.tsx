@@ -5,7 +5,7 @@ import {
   defaultLightTheme,
   defaultDarkTheme,
 } from '@/components/ThemeRegistry/theme'
-import copyToClipboard from '@/lib/copyToClipboard'
+import { copyToClipboard } from '@/lib/utils'
 import { Close, ContentCopy, Delete } from '@mui/icons-material'
 import {
   Box,
