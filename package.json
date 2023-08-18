@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
-    "build": "next build",
+    "build": "next build && npm run prisma-dev-push",
     "start": "next start",
     "lint": "next lint",
     "check-format": "prettier --check --ignore-path .gitignore .",
@@ -13,7 +13,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test": "npm run cypress:open",
-    "test:headless": "npm run cypress:run"
+    "test:headless": "npm run cypress:run",
+    "postinstall": "npm run prisma-dev-push"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

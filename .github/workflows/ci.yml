@@ -23,6 +23,8 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Run Prettier
         run: npm run check-format
       - name: Run Eslint
@@ -37,6 +39,14 @@ jobs:
           echo NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} >> .env.local
       - name: Build
         run: npm run build
+        env:
+          CYPRESS_NEXT_AUTH_SESSION_TOKEN: ${{ secrets.CYPRESS_NEXT_AUTH_SESSION_TOKEN }}
+          CYPRESS_BASE_URL: ${{ secrets.NEXTAUTH_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
 
   cypress-run:
     runs-on: ubuntu-latest
