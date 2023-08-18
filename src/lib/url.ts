@@ -1,6 +1,7 @@
 import { Session } from 'next-auth'
 import crypto from 'crypto'
 import { prisma } from './prisma'
+import { getBaseUrl } from './utils'
 
 /**
  * Get URL by its ID otherwise
@@ -35,7 +36,7 @@ export const createUrl = async (originalUrl: string, session: Session) => {
   }
 
   let randomString = crypto.randomBytes(4).toString('hex')
-  let shortUrl = process.env.NEXTAUTH_URL + '/' + randomString
+  let shortUrl = getBaseUrl() + '/' + randomString
 
   while (true) {
     const count = await prisma.url.count({ where: { shortUrl: shortUrl } })
@@ -43,7 +44,7 @@ export const createUrl = async (originalUrl: string, session: Session) => {
       break
     }
     randomString = crypto.randomBytes(4).toString('hex')
-    shortUrl = process.env.NEXTAUTH_URL + '/' + randomString
+    shortUrl = getBaseUrl() + '/' + randomString
   }
 
   const url = await prisma.url.create({
